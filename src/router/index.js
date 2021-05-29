@@ -10,6 +10,11 @@ const routes = [{
     component: Home,
   },
   {
+    path: "/crear",
+    name: "Crear",
+    component: () => import( /*webpackChunkName: "crear*/ "../views/Crear.vue"),
+  },
+  {
     path: "/carrito",
     name: "Carrito",
     component: () => import( /*webpackChunkName: "carrito*/ "../views/Carrito.vue"),

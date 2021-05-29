@@ -29,7 +29,7 @@
                         :key="i"
                         class="list-group-item text-capitalize"
                       >
-                        {{ ing.name }}
+                        {{ ing }}
                       </li>
                     </ul>
                     <hr />
@@ -73,6 +73,7 @@
 
 <script>
 import { mapGetters, mapMutations } from "vuex";
+
 export default {
   name: "Home",
   data() {

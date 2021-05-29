@@ -1,6 +1,9 @@
 import Vue from "vue";
 import Vuex from "vuex";
-import axios from "axios";
+// import axios from "axios";
+import {
+  db
+} from "../../config/firebase.js";
 
 Vue.use(Vuex);
 
@@ -29,9 +32,12 @@ export default new Vuex.Store({
     }
   },
   mutations: {
-    cargarData(state, payload) {
+    cargarDataDB(state, payload) {
       state.productos = payload
     },
+    // cargarData(state, payload) {
+    //   state.productos = payload
+    // },
     agregarPizza(state, payload) {
       const agregar = payload.id;
       const cantidad = 1;
@@ -103,34 +109,101 @@ export default new Vuex.Store({
         })
       }
       state.carrito = []
+    },
+    guardarPizzasDB(state) {
+      setTimeout(() => {
+        try {
+          const productos = state.productos;
+          productos.forEach(async (producto) => {
+            await db.collection("stockPizzas").add(producto);
+          })
+        } catch (error) {
+          console.log(error);
+        }
+      }, 2000);
+    },
+    agregarNuevaPizza(state, payload) {
+      const existe = state.productos.find(pizza => pizza.id === payload.id)
+      // Si no existe el id ingresar a la base de datos
+      if (!existe) state.productos.push(payload);
     }
   },
   actions: {
-    async getData({
-      commit
+    async getDataDB({
+      commit,
+      state
     }) {
-      const url =
-        "https://us-central1-apis-varias-mias.cloudfunctions.net/pizzeria";
       try {
-        const req = await axios(url);
-        const pizzas = req.data;
-        const pizzasStock = pizzas.map(obj => {
-          obj.stock = 10
-          return obj
-        });
-        commit("cargarData", pizzasStock)
-        console.log(req.data);
+        const snapshot = await db.collection("pizzas").get();
+        const productos = [];
+
+        snapshot.forEach((doc) => {
+          let docData = doc.data();
+          docData.id = doc.id;
+          productos.push(docData);
+        })
+
+        state.productos = productos;
+
+        const eachProducto = productos.map(obj => obj)
+        commit("cargarDataDB", eachProducto)
       } catch (error) {
         console.log(error);
       }
+    },
+    // async getData({
+    //   commit
+    // }) {
+    //   const url =
+    //     "https://us-central1-apis-varias-mias.cloudfunctions.net/pizzeria";
+    //   try {
+    //     const req = await axios(url);
+    //     const pizzas = req.data;
+    //     const pizzasStock = pizzas.map(obj => {
+    //       obj.stock = 10
+    //       return obj
+    //     });
+    //     commit("cargarData", pizzasStock)
+    //     console.log("log de data", req.data);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // },
+    // async setDataDB({
+    //   commit
+    // }) {
+    //   commit("guardarPizzasDB")
+    // },
+    async crearNuevaPizza({
+      commit,
+      state
+    }, payload) {
+      const pizza = payload;
+      if (!pizza) return
+
+      const pizzaId = state.productos.filter(pizza => pizza.id === payload.id);
+      if (pizzaId.length !== 0) {
+        alert("ID ya registrado", pizzaId);
+        return;
+      }
+      commit("agregarNuevaPizza", pizza)
+      await db.collection("pizzas").add(pizza)
+    },
+    async borrarPizzas({
+      commit,
+      state
+    }, payload) {
+      commit("")
+
+      const registro = state.productos.filter(reg => reg.id != payload);
+      state.productos = registro;
+
+      try {
+        db.collection("pizzas").doc(payload).delete()
+        alert("Documento eliminado exitosamente!");
+      } catch (error) {
+        alert("Error eliminando el documento: ", error);
+      }
     }
   },
-  modules: {},
 });
-
-//arreglar que el stock va a 0 en la pag de inicio luego de comprar con un if posiblemente
-// marcar en rojo inventario: vistas estilos o clases dinámicas
-
-//vista de ventar iterar el arreglo de ventas y completar y arreglar problema de que el carrito no suma multples vetas
-
-// hacer error 404

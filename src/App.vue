@@ -14,10 +14,12 @@ export default {
     Nav,
   },
   methods: {
-    ...mapActions(["getData"]),
+    ...mapActions(["getData", "getDataDB", "setDabaDB"]),
   },
   created() {
     this.getData();
+    this.getDataDB();
+    // this.setDataDB;
   },
 };
 </script>
